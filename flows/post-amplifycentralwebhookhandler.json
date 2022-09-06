@@ -1,0 +1,166 @@
+{
+	"schemaVersion": "4",
+	"info": {
+		"name": "post-amplifycentralwebhookhandler"
+	},
+	"parameter": {
+		"properties": {
+			"request": {
+				"description": "The request"
+			},
+			"config": {
+				"type": "object",
+				"description": "The service's configuration"
+			},
+			"env": {
+				"type": "object",
+				"description": "The host OS environment"
+			}
+		},
+		"additionalProperties": false
+	},
+	"start": "invoke-flow.1",
+	"nodes": {
+		"http.1": {
+			"type": "nodehandler://axway-flow/http",
+			"name": "Set HTTP Response",
+			"method": "setresponse",
+			"parameters": [
+				{
+					"name": "status",
+					"type": "number",
+					"value": "200",
+					"metaName": "Status",
+					"metaDescription": "The HTTP status code"
+				}
+			],
+			"outputs": {
+				"next": {
+					"context": "$.response",
+					"routes": [],
+					"metaName": "Next"
+				}
+			},
+			"metaMethod": "Set HTTP Response"
+		},
+		"invoke-flow.1": {
+			"type": "nodehandler://@axway/api-builder-plugin-invoke-flow/invoke-flow",
+			"name": "getAmplifyAPIHeaders",
+			"method": "invokeFlow",
+			"parameters": [
+				{
+					"name": "id",
+					"type": "string",
+					"value": "\"getAmplifyAPIHeaders\"",
+					"metaName": "Flow Listener ID",
+					"metaDescription": "The ID of a previously configured `Flow Listener`."
+				}
+			],
+			"outputs": {
+				"next": {
+					"routes": [
+						"javascript.2"
+					],
+					"context": "$.getAmplifyAPIHeadersFlowResponse",
+					"metaName": "Next"
+				},
+				"error": {
+					"routes": [],
+					"context": "$.error",
+					"metaName": "Error"
+				}
+			},
+			"metaMethod": "Invoke Flow"
+		},
+		"javascript.2": {
+			"type": "nodehandler://@axway/api-builder-plugin-fn-javascript/javascript",
+			"name": "preparePutAPIService",
+			"method": "Execute",
+			"parameters": [
+				{
+					"name": "data",
+					"type": "jsonpath",
+					"value": "$",
+					"metaName": "Data",
+					"metaDescription": "The value to apply as the `data` argument of the JavaScript code. For objects and arrays, `data` is passed by reference."
+				},
+				{
+					"name": "code",
+					"type": "string",
+					"value": "\"let body = data.request.body.payload;\\n  body.spec.description = 'I modified this description in an integration webhook application \\\\n\\\\n'+body.spec.description;\\n  \\n  let env = body.metadata.scope.name;\\n  let name = body.name;\\n  let url = `${data.env.API_CENTRAL_URL}/apis/management/v1alpha1/environments/${env}/apiservices/${name}`;\\n  \\n  return {url, body};\""
+				}
+			],
+			"outputs": {
+				"next": {
+					"context": "$.preparePutAPIServiceResult",
+					"routes": [
+						"rest.2"
+					],
+					"metaName": "Next"
+				},
+				"error": {
+					"context": "$.error",
+					"routes": [],
+					"metaName": "Error"
+				}
+			},
+			"metaMethod": "Execute"
+		},
+		"rest.2": {
+			"type": "nodehandler://@axway/api-builder-plugin-fn-restclient/rest",
+			"name": "putAPIService",
+			"method": "put",
+			"parameters": [
+				{
+					"name": "headers",
+					"type": "jsonpath",
+					"value": "$.getAmplifyAPIHeadersFlowResponse",
+					"metaName": "Headers",
+					"metaDescription": "The HTTP headers to set."
+				},
+				{
+					"name": "body",
+					"type": "jsonpath",
+					"value": "$.preparePutAPIServiceResult.body",
+					"metaName": "Body",
+					"metaDescription": "The content to send."
+				},
+				{
+					"name": "url",
+					"type": "jsonpath",
+					"value": "$.preparePutAPIServiceResult.url"
+				}
+			],
+			"outputs": {
+				"2xx": {
+					"routes": [
+						"http.1"
+					],
+					"context": "$.response",
+					"metaName": "2XX"
+				},
+				"3xx": {
+					"routes": [],
+					"context": "$.response",
+					"metaName": "3XX"
+				},
+				"4xx": {
+					"routes": [],
+					"context": "$.response",
+					"metaName": "4XX"
+				},
+				"5xx": {
+					"routes": [],
+					"context": "$.response",
+					"metaName": "5XX"
+				},
+				"error": {
+					"routes": [],
+					"context": "$.error",
+					"metaName": "Error"
+				}
+			},
+			"metaMethod": "PUT"
+		}
+	}
+}
