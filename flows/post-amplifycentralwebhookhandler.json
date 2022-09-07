@@ -43,6 +43,42 @@
 			},
 			"metaMethod": "Set HTTP Response"
 		},
+		"javascript.1": {
+			"type": "nodehandler://@axway/api-builder-plugin-fn-javascript/javascript",
+			"name": "prepareGetAPIService",
+			"method": "Execute",
+			"parameters": [
+				{
+					"name": "data",
+					"type": "jsonpath",
+					"value": "$",
+					"metaName": "Data",
+					"metaDescription": "The value to apply as the `data` argument of the JavaScript code. For objects and arrays, `data` is passed by reference."
+				},
+				{
+					"name": "code",
+					"type": "string",
+					"value": "\"let env = data.request.body.payload.metadata.scope.name;\\n  let name = data.request.body.payload.metadata.references.find(c => c.kind === 'APIService').name;\\n  let url = `${data.env.API_CENTRAL_URL}/apis/management/v1alpha1/environments/${env}/apiservices/${name}`;\\n  \\n  return {url};\"",
+					"metaName": "Code",
+					"metaDescription": "A JavaScript function body. Supports `await` and returning promises. `data` is the value of the Data parameter. `logger` is the API Builder logger. See the docs for more info: https://docs.axway.com/bundle/api-builder/page/docs/developer_guide/flows/flow_nodes/javascript_flow_node/index.html"
+				}
+			],
+			"outputs": {
+				"next": {
+					"context": "$.prepareGetAPIServiceResult",
+					"routes": [
+						"rest.1"
+					],
+					"metaName": "Next"
+				},
+				"error": {
+					"context": "$.error",
+					"routes": [],
+					"metaName": "Error"
+				}
+			},
+			"metaMethod": "Execute"
+		},
 		"invoke-flow.1": {
 			"type": "nodehandler://@axway/api-builder-plugin-invoke-flow/invoke-flow",
 			"name": "getAmplifyAPIHeaders",
@@ -59,7 +95,7 @@
 			"outputs": {
 				"next": {
 					"routes": [
-						"javascript.2"
+						"javascript.1"
 					],
 					"context": "$.getAmplifyAPIHeadersFlowResponse",
 					"metaName": "Next"
@@ -71,6 +107,57 @@
 				}
 			},
 			"metaMethod": "Invoke Flow"
+		},
+		"rest.1": {
+			"type": "nodehandler://@axway/api-builder-plugin-fn-restclient/rest",
+			"name": "getAPIService",
+			"method": "get",
+			"parameters": [
+				{
+					"name": "headers",
+					"type": "jsonpath",
+					"value": "$.getAmplifyAPIHeadersFlowResponse",
+					"metaName": "Headers",
+					"metaDescription": "The HTTP headers to set."
+				},
+				{
+					"name": "url",
+					"type": "jsonpath",
+					"value": "$.prepareGetAPIServiceResult.url",
+					"metaName": "URL",
+					"metaDescription": "The target URL."
+				}
+			],
+			"outputs": {
+				"2xx": {
+					"routes": [
+						"javascript.2"
+					],
+					"context": "$.getAPIServiceResponse",
+					"metaName": "2XX"
+				},
+				"3xx": {
+					"routes": [],
+					"context": "$.response",
+					"metaName": "3XX"
+				},
+				"4xx": {
+					"routes": [],
+					"context": "$.response",
+					"metaName": "4XX"
+				},
+				"5xx": {
+					"routes": [],
+					"context": "$.response",
+					"metaName": "5XX"
+				},
+				"error": {
+					"routes": [],
+					"context": "$.error",
+					"metaName": "Error"
+				}
+			},
+			"metaMethod": "GET"
 		},
 		"javascript.2": {
 			"type": "nodehandler://@axway/api-builder-plugin-fn-javascript/javascript",
@@ -87,7 +174,7 @@
 				{
 					"name": "code",
 					"type": "string",
-					"value": "\"let body = data.request.body.payload;\\n  body.spec.description = 'I modified this description in an integration webhook application \\\\n\\\\n'+body.spec.description;\\n  \\n  let env = body.metadata.scope.name;\\n  let name = body.name;\\n  let url = `${data.env.API_CENTRAL_URL}/apis/management/v1alpha1/environments/${env}/apiservices/${name}`;\\n  \\n  return {url, body};\""
+					"value": "\"let body = data.getAPIServiceResponse.body;\\n  body.spec.description = 'I modified this description in an integration webhook application \\\\n\\\\n'+body.spec.description;\\n  \\n  return {body};\""
 				}
 			],
 			"outputs": {
@@ -119,16 +206,18 @@
 					"metaDescription": "The HTTP headers to set."
 				},
 				{
+					"name": "url",
+					"type": "jsonpath",
+					"value": "$.prepareGetAPIServiceResult.url",
+					"metaName": "URL",
+					"metaDescription": "The target URL."
+				},
+				{
 					"name": "body",
 					"type": "jsonpath",
 					"value": "$.preparePutAPIServiceResult.body",
 					"metaName": "Body",
 					"metaDescription": "The content to send."
-				},
-				{
-					"name": "url",
-					"type": "jsonpath",
-					"value": "$.preparePutAPIServiceResult.url"
 				}
 			],
 			"outputs": {
