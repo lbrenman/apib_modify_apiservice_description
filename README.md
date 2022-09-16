@@ -1,8 +1,8 @@
 # API Builder App to Modify an API Service Description
 
-This is a more complex API Builder API that can modify the API Service description of a newly discovered API in Amplify Central. It adds contact info from the API OAS 3 document to the API Service description. The API is triggered by an APIServiceRevision creation webhook.
+This is an API Builder API that can modify the API Service description of a newly discovered API in Amplify Central. It adds contact info from the API OAS 3 document to the API Service description. The API is triggered by an APIServiceRevision creation webhook.
 
-For example to change the default description from:
+For example it changes the default description from:
 
 ![](https://i.imgur.com/oSuLBvP.png)
 
