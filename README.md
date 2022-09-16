@@ -8,7 +8,7 @@ For example it changes the default description from:
 
 to this:
 
-![](https://i.imgur.com/Nbg8y05.png)
+![](https://i.imgur.com/MZZezRr.png)
 
 The project exposes one API:
 

@@ -186,9 +186,7 @@
 				{
 					"name": "code",
 					"type": "string",
-					"value": "\"let body = data.getAPIServiceResponse.body;\\n \\n \\n  let prefix = `OAS ${data.extractOASResult.openapi} document contact is ${data.extractOASResult.info.contact.name} (${data.extractOASResult.info.contact.email})\\\\n\\\\n`;\\n\\n  body.spec.description = prefix+body.spec.description;\\n  \\n  return {body};\"",
-					"metaName": "Code",
-					"metaDescription": "A JavaScript function body. Supports `await` and returning promises. `data` is the value of the Data parameter. `logger` is the API Builder logger. See the docs for more info: https://docs.axway.com/bundle/api-builder/page/docs/developer_guide/flows/flow_nodes/javascript_flow_node/index.html"
+					"value": "\"let body = data.getAPIServiceResponse.body;\\n \\n \\n  let prefix = `OAS ${data.extractOASResult.openapi} document contact is ${data.extractOASResult.info.contact.name} ([${data.extractOASResult.info.contact.email}](mailto:${data.extractOASResult.info.contact.email}))\\\\n\\\\n`;\\n\\n  body.spec.description = prefix+body.spec.description;\\n  \\n  return {body};\""
 				}
 			],
 			"outputs": {
@@ -395,15 +393,19 @@
 				{
 					"name": "status",
 					"type": "number",
-					"value": "400"
+					"value": "400",
+					"metaName": "Status",
+					"metaDescription": "The HTTP status code"
 				}
 			],
 			"outputs": {
 				"next": {
 					"context": "$.response",
-					"routes": []
+					"routes": [],
+					"metaName": "Next"
 				}
-			}
+			},
+			"metaMethod": "Set HTTP Response"
 		}
 	}
 }
