@@ -19,7 +19,7 @@
 		},
 		"additionalProperties": false
 	},
-	"start": "invoke-flow.1",
+	"start": "javascript.3",
 	"nodes": {
 		"http.1": {
 			"type": "nodehandler://axway-flow/http",
@@ -174,7 +174,7 @@
 				{
 					"name": "code",
 					"type": "string",
-					"value": "\"let body = data.getAPIServiceResponse.body;\\n  body.spec.description = 'I modified this description in an integration webhook application \\\\n\\\\n'+body.spec.description;\\n  \\n  return {body};\""
+					"value": "\"let body = data.getAPIServiceResponse.body;\\n \\n \\n  let prefix = `OAS ${data.extractOASResult.openapi} document contact is ${data.extractOASResult.info.contact.name} with email: ${data.extractOASResult.info.contact.email}\\\\n\\\\n`;\\n\\n  body.spec.description = prefix+body.spec.description;\\n  \\n  return {body};\""
 				}
 			],
 			"outputs": {
@@ -250,6 +250,116 @@
 				}
 			},
 			"metaMethod": "PUT"
+		},
+		"javascript.3": {
+			"type": "nodehandler://@axway/api-builder-plugin-fn-javascript/javascript",
+			"name": "extractOAS",
+			"method": "Execute",
+			"parameters": [
+				{
+					"name": "data",
+					"type": "jsonpath",
+					"value": "$",
+					"metaName": "Data",
+					"metaDescription": "The value to apply as the `data` argument of the JavaScript code. For objects and arrays, `data` is passed by reference."
+				},
+				{
+					"name": "code",
+					"type": "string",
+					"value": "\"//https://futurestud.io/tutorials/how-to-base64-encode-decode-a-value-in-node-js\\n  let oasB64Decoded = JSON.parse(Buffer.from(data.request.body.payload.spec.definition.value, 'base64').toString('utf8'));\\n  return oasB64Decoded;\"",
+					"metaName": "Code",
+					"metaDescription": "A JavaScript function body. Supports `await` and returning promises. `data` is the value of the Data parameter. `logger` is the API Builder logger. See the docs for more info: https://docs.axway.com/bundle/api-builder/page/docs/developer_guide/flows/flow_nodes/javascript_flow_node/index.html"
+				}
+			],
+			"outputs": {
+				"next": {
+					"context": "$.extractOASResult",
+					"routes": [
+						"javascript.4"
+					],
+					"metaName": "Next"
+				},
+				"error": {
+					"context": "$.error",
+					"routes": [],
+					"metaName": "Error"
+				}
+			},
+			"metaMethod": "Execute"
+		},
+		"javascript.4": {
+			"type": "nodehandler://@axway/api-builder-plugin-fn-javascript/javascript",
+			"name": "calculateIsOAS3",
+			"method": "Execute",
+			"parameters": [
+				{
+					"name": "data",
+					"type": "jsonpath",
+					"value": "$",
+					"metaName": "Data",
+					"metaDescription": "The value to apply as the `data` argument of the JavaScript code. For objects and arrays, `data` is passed by reference."
+				},
+				{
+					"name": "code",
+					"type": "string",
+					"value": "\"return (data.extractOASResult.hasOwnProperty('openapi'));\"",
+					"metaName": "Code",
+					"metaDescription": "A JavaScript function body. Supports `await` and returning promises. `data` is the value of the Data parameter. `logger` is the API Builder logger. See the docs for more info: https://docs.axway.com/bundle/api-builder/page/docs/developer_guide/flows/flow_nodes/javascript_flow_node/index.html"
+				}
+			],
+			"outputs": {
+				"next": {
+					"context": "$.result",
+					"routes": [
+						"condition.1"
+					],
+					"metaName": "Next"
+				},
+				"error": {
+					"context": "$.error",
+					"routes": [],
+					"metaName": "Error"
+				}
+			},
+			"metaMethod": "Execute"
+		},
+		"condition.1": {
+			"type": "nodehandler://axway-flow/condition",
+			"name": "isOAS3",
+			"method": "equals",
+			"parameters": [
+				{
+					"name": "source",
+					"type": "jsonpath",
+					"value": "$.result",
+					"metaName": "Source",
+					"metaDescription": "The input to test."
+				},
+				{
+					"name": "value",
+					"type": "boolean",
+					"value": "true",
+					"metaName": "Value",
+					"metaDescription": "The value to test input against."
+				}
+			],
+			"outputs": {
+				"true": {
+					"routes": [
+						"invoke-flow.1"
+					],
+					"context": "$.equals",
+					"metaName": "True"
+				},
+				"false": {
+					"routes": [
+						"http.1"
+					],
+					"context": "$.equals",
+					"metaName": "False"
+				}
+			},
+			"metaMethod": "Equals"
 		}
 	}
 }
